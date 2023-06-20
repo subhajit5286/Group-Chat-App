@@ -2,41 +2,31 @@ const User = require('../models/user');
 const bcrypt = require('bcrypt');
 //const jwt = require('jsonwebtoken');
 
-function isstringinvalid(string) {
-    if(string == undefined || string.length=== 0){
-        return true;
-    }else {
-        return false;
-    }
-}
-function isUserexist(email,phonenumber){
-    const user = User.findAll({where : { email, phonenumber }})
-    if(user){
-        return true;
-    }
-    else{
-        return false;
-    }
-}
+
 // function generationAccessToken(id,name,ispremiumuser){
 //     return jwt.sign({ userId : id , name:name ,ispremiumuser }, 'subhajit')
 //  }
 
 exports.signUp = async (req,res,next) => {
     try{
-        const { name, email , phonenumber,password } = req.body;
-        console.log('email',email,password,phonenumber)
-        if(isstringinvalid(name) || isstringinvalid(email) || isstringinvalid(password)){
-            return res.status(400).json({err: "Bad params . something is missing"})
+        const {name, email, phonenumber, password} = req.body;
+         console.log(name, email, phonenumber, password);
+        if(name.length > 0 && email.length > 0 && phonenumber.length>0 && password.length > 0){
+            const user = await User.findOne({where: {email: email}});
+            if(user){
+                return res.status(202).json({message: 'user already exists'});
+            }
+
+            bcrypt.hash(password, 10, async (error, hash) => {
+                if(error) throw new Error;
+
+                await User.create({name: name, email: email, phonenumber: phonenumber, password: hash});   
+            })
+            res.status(201).json({message: 'sign up successfull'});
+
+        }else {
+            res.status(400).json({message: 'bad parameters'});
         }
-        else if(isUserexist(email,phonenumber)){
-            return res.status(403).json({err: "User already Exist"})
-        }
-        const saltrounds = 10;
-        bcrypt.hash(password, saltrounds, async (err,hash) => {
-        await User.create( { name:name,email:email,phonenumber:phonenumber,password:hash})
-           res.status(201).json({message: 'Succesfully done'})
-           })
     } catch(err) {
         res.status(500).json(err);
 
