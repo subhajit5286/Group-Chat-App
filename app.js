@@ -8,15 +8,20 @@ const sequelize = require('./util/database');
 const app = express();
 
 const User = require('./models/user');
+const Message = require('./models/message');
 
 
 const userRoutes = require('./routes/user');    
+const messageRoutes = require('./routes/message');
 
 app.use(bodyParser.json({ extended: false }));
 app.use(cors());
 
 app.use('/user', userRoutes);
+app.use('/message', messageRoutes);
 
+User.hasMany(Message);
+Message.belongsTo(User);
 
 sequelize 
   .sync({force:false}) 
