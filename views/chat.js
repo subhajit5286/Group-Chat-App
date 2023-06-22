@@ -21,11 +21,39 @@ document.getElementById('addForm').onsubmit = async (e) => {
 };
 window.addEventListener('DOMContentLoaded', async () => {
     try {
-        const res = await axios.get('http://localhost:5000/message/fetch');
-        if(res.status === 200){
-            console.log(res.data)
-        }
+        // const res = await axios.get('http://localhost:5000/message/fetch');
+        // if(res.status === 200){
+        //     console.log(res.data)
+        // }
+        setInterval(() => {
+            fetchMessagesAndShowToUser();
+        }, 1000);  
     } catch (error) {
         console.log(error);
     }
 });
+async function fetchMessagesAndShowToUser() {
+    try {
+        const res = await axios.get('http://localhost:5000/message/fetch');
+        // console.log('fetch res', res);
+        if(res.status === 200){
+
+            const messages = res.data.messages;
+            showChatToUser(messages);
+        }    
+    } catch (error) {
+        console.log(error);
+    }
+};
+function showChatToUser(messages) {
+    try {
+        const chatBody = document.getElementById('chat-body');
+        
+        chatBody.innerHTML = '';
+        messages.forEach((message) => {
+            chatBody.innerHTML += message.message + `<br>`;
+        });
+    } catch (error) {
+        console.log(error);
+    }
+}
