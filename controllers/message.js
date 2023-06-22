@@ -25,3 +25,12 @@ function isValidMessage(message) {
         return false;
     }
 }
+exports.fetchMessage = async (req, res, next) => {
+    try {
+        const messages = await Message.findAll();
+        res.status(200).json({messages: messages});
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({message: 'could not fetch messages'});
+    }
+}

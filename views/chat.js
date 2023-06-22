@@ -19,3 +19,13 @@ document.getElementById('addForm').onsubmit = async (e) => {
         console.log('error while sending msg', error);
     }
 };
+window.addEventListener('DOMContentLoaded', async () => {
+    try {
+        const res = await axios.get('http://localhost:5000/message/fetch');
+        if(res.status === 200){
+            console.log(res.data)
+        }
+    } catch (error) {
+        console.log(error);
+    }
+});
