@@ -34,11 +34,31 @@ window.addEventListener('DOMContentLoaded', async () => {
 });
 async function fetchMessagesAndShowToUser() {
     try {
-        const res = await axios.get('http://localhost:5000/message/fetch');
+        //const res = await axios.get('http://localhost:5000/message/fetch');
         // console.log('fetch res', res);
+        let oldMessages = JSON.parse(localStorage.getItem('messages'));
+        let lastMsgId;
+        if(!oldMessages) {
+            oldMessages = [];
+            lastMsgId = 0;
+        }
+        if(lastMsgId !== 0) {
+            lastMsgId = oldMessages[oldMessages.length - 1].id;
+        }
+        console.log('last msg id', lastMsgId);
+        // console.log('oldmsgs1', oldMessages);
+        const res = await axios.get(`http://localhost:5000/message/fetchNewMsgs/?lastMsgId=${lastMsgId}`);
+        console.log(res)
         if(res.status === 200){
 
-            const messages = res.data.messages;
+           // const messages = res.data.messages;
+            const newMessages = res.data.messages;
+            let messages = oldMessages.concat(newMessages);
+            if(messages.length > 10){
+                messages = messages.slice(messages.length - 10, messages.length);
+            }
+            // console.log('messages', messages);
+            localStorage.setItem('messages', JSON.stringify(messages));
             showChatToUser(messages);
         }    
     } catch (error) {

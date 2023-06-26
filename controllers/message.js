@@ -1,4 +1,5 @@
 const Message = require('../models/message');
+const { Op } = require("sequelize");
 
 exports.saveMessage = async (req, res, next) => {
     try {
@@ -25,9 +26,13 @@ function isValidMessage(message) {
         return false;
     }
 }
-exports.fetchMessage = async (req, res, next) => {
+exports.fetchNewMessages  = async (req, res, next) => {
     try {
-        const messages = await Message.findAll();
+        //const messages = await Message.findAll();
+        const lastMsgId = +req.query.lastMsgId;
+        console.log('msg id in backend:', lastMsgId);
+        const messages = await Message.findAll({where: {id: {[Op.gt]: lastMsgId}}});
+        console.log(messages)
         res.status(200).json({messages: messages});
     } catch (error) {
         console.log(error);
