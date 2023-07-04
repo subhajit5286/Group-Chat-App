@@ -1,0 +1,9 @@
+#chat-list p:hover {
+    color: rgb(66, 23, 207);
+    cursor: pointer;
+}
+
+#chat-list p.active {
+    background-color: darkgreen;
+    color:floralwhite;
+}
