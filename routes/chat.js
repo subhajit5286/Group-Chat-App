@@ -9,5 +9,6 @@ router.post('/addParticipant', authenticator.authenticate, chatController.addPar
 router.post('/addUser', authenticator.authenticate, chatController.addUser1);
 router.post('/nameTheGroup', authenticator.authenticate, chatController.setGroupName);
 router.get('/getGroups', authenticator.authenticate, chatController.getGroups);
+router.get('/getMembers', authenticator.authenticate, chatController.getMembers);
 
 module.exports = router;

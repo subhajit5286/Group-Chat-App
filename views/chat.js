@@ -176,6 +176,7 @@ document.getElementById('chat-list').onclick = async (e) => {
         //         'Authorization': token
         //     } 
         // });
+            getMembersAndShowToUser(groupId);
             const intervalId = setInterval(() => {
 
                 fetchMessagesAndShowToUser(groupId, intervalId);
@@ -185,3 +186,139 @@ document.getElementById('chat-list').onclick = async (e) => {
         console.log(error);
     }
 }
+
+async function getMembersAndShowToUser(groupId){
+    try{
+        const token = localStorage.getItem('token');
+        const res = await axios.get(`http://localhost:5000/chat/getMembers?groupId=${groupId}`, {
+            headers: {
+                'Authorization': token
+            }
+        });
+        console.log('get groups response:', res);
+        if(res.status === 200) {
+            const users = res.data.members;
+            console.log(users)
+            users.forEach(user => {
+             console.log(user.dataValues.name);
+            showGrouopUsers(users);
+        });
+        }
+
+    }catch (error) {
+        console.log(error);
+    }
+}
+function showGrouopUsers(users){
+    try {
+        // console.log(groups);
+        const chatName = document.getElementById('chat-name');
+        chatName.innerHTML = '';
+        users.forEach(user => {
+           if(user.isAdmin) {
+                chatName.innerHTML += `<li style="color:blue;">
+                    ${user.dataValues.name} <b>-Admin</b>
+                    <button  class="rmadminbtn" id="rmadminbtn-${user.dataValues.id}">- Admin </button>
+                    <button  class="rmbtn" id="rmbtn-${user.dataValues.id}">- User</button>
+                </li>`;
+            } else {
+                chatName.innerHTML += `<li>
+                    ${user.dataValues.name}
+                    <button class="adminbtn" id="mkbtn-${user.dataValues.id}">+ Admin</button>
+                    <button class="rmbtn" id="rmbtn-${user.dataValues.id}">- User</button>
+                </li>`;
+            }
+        });
+    } catch (error) {
+        console.log(error);
+    }
+}
+document.getElementById('chat-name').onclick = (e) => {
+    e.preventDefault();
+    try {
+        if(e.target.className == 'adminbtn'){
+            makeAdmin(e.target.id);
+        }
+        else if(e.target.className == 'rmbtn') {
+            console.log(e.target.id)
+            removeMember(e.target.id);
+         } 
+         else if(e.target.className == 'rmadminbtn') {
+            removeAdminPermission(e.target.id);
+        }
+    } catch (error) {
+        console.log(error);
+    }
+};
+
+async function makeAdmin(idString) {
+    try {
+        const userId = idString.split('-')[1];
+        const token = localStorage.getItem('token');
+        const groupId = localStorage.getItem('groupId');
+        const res = await axios.put('http://localhost:5000/admin/makeAdmin', {userId: userId, groupId: groupId}, {
+            headers: {
+                'Authorization': token
+            }
+        }); 
+        if(res.status === 200) {
+            console.log('setting admin response:', res);
+            confirm('user set as admin');
+            getMembersAndShowToUser(groupId);
+        }
+    } catch (error) {
+        console.log(error);
+        if(error.response.status === 403) {
+            alert(`You don't have required permissions.`);
+        }
+    }
+};
+
+async function removeMember(idString) {
+    try {
+        const userId = idString.split('-')[1];
+        const token = localStorage.getItem('token');
+        const groupId = localStorage.getItem('groupId');
+        console.log(userId)
+        let config = { 
+            headers: {
+                Authorization: token
+            },
+            data: {userId: userId, groupId: groupId}
+        }
+        const res = await axios.delete('http://localhost:5000/admin/removeUserFromGroup', config); 
+        if(res.status === 200) {
+            console.log('removing user response:', res);
+            confirm('user removed from group');
+            getMembersAndShowToUser(groupId);
+        }
+    } catch (error) {
+        console.log(error);
+        if(error.response.status === 403) {
+            alert(`You don't have required permissions.`);
+        }
+    }
+};
+
+async function removeAdminPermission(idString) {
+    try {
+        const userId = idString.split('-')[1];
+        const token = localStorage.getItem('token');
+        const groupId = localStorage.getItem('groupId');
+        const res = await axios.put('http://localhost:5000/admin/removeAdmin', {userId: userId, groupId: groupId}, {
+            headers: {
+                'Authorization': token
+            }
+        }); 
+        if(res.status === 200) {
+            console.log('remove admin response:', res);
+            confirm('user removed from admin');
+            getMembersAndShowToUser(groupId);
+        }
+    } catch (error) {
+        console.log(error);
+        if(error.response.status === 403) {
+            alert(`You don't have required permissions.`);
+        }
+    }
+};

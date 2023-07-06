@@ -24,6 +24,10 @@ document.getElementById('add-user-form').onsubmit = async (e) => {
             alert('Email is not registered. Please send them an invite.');
             window.location.href = 'chat.html';
         }
+        if(res.status === 203) {
+            alert('You Dont Have Permission');
+            window.location.href = 'chat.html';
+        }
     } catch (error) {
         console.log(error);
     }
