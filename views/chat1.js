@@ -4,9 +4,9 @@ const socket = io('http://localhost:5000/chat1')
   document.getElementById('namedisplay').textContent=`No of online Users: ${onlineusers}`;
 
 })
-
-
-document.getElementById('addForm').onsubmit = async (e) => {
+//         var on =2;
+// document.getElementById('namedisplay').textContent=`${on}`;
+        document.getElementById('addForm').onsubmit = async (e) => {
     e.preventDefault();
     try {
         const token = localStorage.getItem('token');
@@ -17,6 +17,7 @@ document.getElementById('addForm').onsubmit = async (e) => {
             return document.getElementById('text').value = '';
             // throw new Error('no group selected');
         }
+      //  socket.emit('groupId',groupId)
         console.log(message)
         const res = await axios.post('http://localhost:5000/message/send', 
         {
@@ -30,11 +31,13 @@ document.getElementById('addForm').onsubmit = async (e) => {
         });
         console.log(res)
         document.getElementById('text').value = '';
+        fetchMessagesAndShowToUser(groupId);
 
     } catch (error) {
         console.log('error while sending msg', error);
     }
 };
+
 window.addEventListener('DOMContentLoaded', async () => {
     try {
         // const res = await axios.get('http://localhost:5000/message/fetch');
@@ -42,80 +45,14 @@ window.addEventListener('DOMContentLoaded', async () => {
         //     console.log(res.data)
         // }
         localStorage.removeItem('groupId');
-        setInterval(() => {
+        //setInterval(() => {
             //fetchMessagesAndShowToUser();
             fetchGroupsAndShowToUser(); 
-        }, 1000);  
+        //}, 1000);  
     } catch (error) {
         console.log(error);
     }
 });
-async function fetchMessagesAndShowToUser(groupId) {
-    try {
-        //const res = await axios.get('http://localhost:5000/message/fetch');
-        // console.log('fetch res', res);
-       // localStorage.setItem('intervalId', intervalId);
-        let oldMessages = JSON.parse(localStorage.getItem('messages'));
-        let lastMsgId;
-        let messages;
-        if(!oldMessages) {
-            console.log('no old messages');
-            oldMessages = [];
-            lastMsgId = 0;
-        }else{
-        //if(lastMsgId !== 0) {
-            messages = oldMessages;
-            lastMsgId = oldMessages[oldMessages.length - 1].id;
-        }
-        console.log('last msg id', lastMsgId);
-        // console.log('oldmsgs1', oldMessages);
-        //const res = await axios.get(`http://localhost:5000/message/fetchNewMsgs/?lastMsgId=${lastMsgId}`);
-        const res = await axios.get(`http://localhost:5000/message/fetchNewMsgs/?lastMsgId=${lastMsgId}&groupId=${groupId}`);
-        console.log(res)
-        if(res.status === 200){
-
-           // const messages = res.data.messages;
-            const newMessages = res.data.messages;
-            //let messages = oldMessages.concat(newMessages);
-            messages = oldMessages.concat(newMessages);
-            if(messages.length > 10){
-                messages = messages.slice(messages.length - 10, messages.length);
-            }
-            // console.log('messages', messages);
-            // localStorage.setItem('messages', JSON.stringify(messages));
-            // showChatToUser(messages);
-        }    
-         let currentMsgs = [];
-        for(let i =0 ; i < messages.length; i++) {
-            if(messages[i].groupId == groupId){
-                currentMsgs.push(messages[i]);
-            }
-        }
-        console.log('msgs to show:', currentMsgs);
-        localStorage.setItem('messages', JSON.stringify(messages));
-        showChatToUser(currentMsgs);
-    } catch (error) {
-        console.log(error);
-    }
-};
-function showChatToUser(messages) {
-    try {
-        const chatBody = document.getElementById('chat-body');
-        
-        chatBody.innerHTML = '';
-        messages.forEach((message) => {
-           // chatBody.innerHTML += message.message + `<br>`;
-            chatBody.innerHTML += `
-                <p>
-                    ${message.from}: ${message.message}
-                </p>
-                <br>
-            `;
-        });
-    } catch (error) {
-        console.log(error);
-    }
-}
 document.getElementById('new-group-btn').onclick = async (e) => {
     window.location.href = 'createChat.html';
 };
@@ -133,16 +70,21 @@ async function fetchGroupsAndShowToUser() {
         console.log('get groups response:', res);
         if(res.status === 200) {
             const groups = res.data.groups;
-            showGrouopsToUser(groups);
+            //showGrouopsToUser(groups);
+            socket.emit('groups',groups)
         }
     } catch (error) {
         console.log(error);
     }
 }
-
+socket.on('group-s',groups=>{
+        console.log('hh',groups);
+        showGrouopsToUser(groups);
+  })
 function showGrouopsToUser(groups) {
     try {
         // console.log(groups);
+        
         const chatList = document.getElementById('chat-list');
         chatList.innerHTML = '';
         groups.forEach(group => {
@@ -157,7 +99,6 @@ function showGrouopsToUser(groups) {
         console.log(error);
     }
 }
-
 document.getElementById('chat-list').onclick = async (e) => {
     e.preventDefault();
     try {
@@ -184,15 +125,16 @@ document.getElementById('chat-list').onclick = async (e) => {
         //         'Authorization': token
         //     } 
         // });
+            //socket.emit('groupId',groupId)
             getMembersAndShowToUser(groupId);
            // const intervalId = 
-            socket.emit('groupId',groupId)
-            setInterval(() => {
+            //socket.emit('groupId',groupId)
+            // setInterval(() => {
 
-                fetchMessagesAndShowToUser(groupId);
-                clearInterval(1000)
-            }, 1000);
-           // fetchMessagesAndShowToUser(groupId);
+            //     fetchMessagesAndShowToUser(groupId);
+            //     clearInterval(1000)
+            // }, 1000);
+            fetchMessagesAndShowToUser1(groupId);
         }
     } catch (error) {
         console.log(error);
@@ -245,92 +187,125 @@ function showGrouopUsers(users){
         console.log(error);
     }
 }
-document.getElementById('chat-name').onclick = (e) => {
-    e.preventDefault();
+async function fetchMessagesAndShowToUser(groupId) {
     try {
-        if(e.target.className == 'adminbtn'){
-            makeAdmin(e.target.id);
+        //const res = await axios.get('http://localhost:5000/message/fetch');
+        // console.log('fetch res', res);
+       // localStorage.setItem('intervalId', intervalId);
+        let oldMessages = JSON.parse(localStorage.getItem('messages'));
+        let lastMsgId;
+        let messages;
+        if(!oldMessages) {
+            console.log('no old messages');
+            oldMessages = [];
+            lastMsgId = 0;
+        }else{
+        //if(lastMsgId !== 0) {
+            messages = oldMessages;
+            lastMsgId = oldMessages[oldMessages.length - 1].id;
         }
-        else if(e.target.className == 'rmbtn') {
-            console.log(e.target.id)
-            removeMember(e.target.id);
-         } 
-         else if(e.target.className == 'rmadminbtn') {
-            removeAdminPermission(e.target.id);
-        }
-    } catch (error) {
-        console.log(error);
-    }
-};
+        console.log('last msg id', lastMsgId);
+        // console.log('oldmsgs1', oldMessages);
+        //const res = await axios.get(`http://localhost:5000/message/fetchNewMsgs/?lastMsgId=${lastMsgId}`);
+        const res = await axios.get(`http://localhost:5000/message/fetchNewMsgs/?lastMsgId=${lastMsgId}&groupId=${groupId}`);
+        console.log(res)
+        if(res.status === 200){
 
-async function makeAdmin(idString) {
-    try {
-        const userId = idString.split('-')[1];
-        const token = localStorage.getItem('token');
-        const groupId = localStorage.getItem('groupId');
-        const res = await axios.put('http://localhost:5000/admin/makeAdmin', {userId: userId, groupId: groupId}, {
-            headers: {
-                'Authorization': token
+           // const messages = res.data.messages;
+            const newMessages = res.data.messages;
+            //let messages = oldMessages.concat(newMessages);
+            messages = oldMessages.concat(newMessages);
+            if(messages.length > 10){
+                messages = messages.slice(messages.length - 10, messages.length);
             }
-        }); 
-        if(res.status === 200) {
-            console.log('setting admin response:', res);
-            confirm('user set as admin');
-            getMembersAndShowToUser(groupId);
-        }
-    } catch (error) {
-        console.log(error);
-        if(error.response.status === 403) {
-            alert(`You don't have required permissions.`);
-        }
-    }
-};
-
-async function removeMember(idString) {
-    try {
-        const userId = idString.split('-')[1];
-        const token = localStorage.getItem('token');
-        const groupId = localStorage.getItem('groupId');
-        console.log(userId)
-        let config = { 
-            headers: {
-                Authorization: token
-            },
-            data: {userId: userId, groupId: groupId}
-        }
-        const res = await axios.delete('http://localhost:5000/admin/removeUserFromGroup', config); 
-        if(res.status === 200) {
-            console.log('removing user response:', res);
-            confirm('user removed from group');
-            getMembersAndShowToUser(groupId);
-        }
-    } catch (error) {
-        console.log(error);
-        if(error.response.status === 403) {
-            alert(`You don't have required permissions.`);
-        }
-    }
-};
-
-async function removeAdminPermission(idString) {
-    try {
-        const userId = idString.split('-')[1];
-        const token = localStorage.getItem('token');
-        const groupId = localStorage.getItem('groupId');
-        const res = await axios.put('http://localhost:5000/admin/removeAdmin', {userId: userId, groupId: groupId}, {
-            headers: {
-                'Authorization': token
+            // console.log('messages', messages);
+            // localStorage.setItem('messages', JSON.stringify(messages));
+            // showChatToUser(messages);
+        }    
+         let currentMsgs = [];
+        for(let i =0 ; i < messages.length; i++) {
+            if(messages[i].groupId == groupId){
+                currentMsgs.push(messages[i]);
             }
-        }); 
-        if(res.status === 200) {
-            console.log('remove admin response:', res);
-            confirm('user removed from admin');
-            getMembersAndShowToUser(groupId);
         }
+        console.log('msgs to show:', currentMsgs);
+        localStorage.setItem('messages', JSON.stringify(messages));
+        //showChatToUser(currentMsgs);
+        socket.emit('messages',currentMsgs)
+
     } catch (error) {
         console.log(error);
-        if(error.response.status === 403) {
-            alert(`You don't have required permissions.`);
+    }
+};
+socket.on('messages-s',messages=>{
+        console.log(messages)
+        showChatToUser(messages)
+  })
+function showChatToUser(messages) {
+    try {
+        const chatBody = document.getElementById('chat-body');
+        
+        chatBody.innerHTML = '';
+        messages.forEach((message) => {
+           // chatBody.innerHTML += message.message + `<br>`;
+            chatBody.innerHTML += `
+                <p>
+                    ${message.from}: ${message.message}
+                </p>
+                <br>
+            `;
+        });
+    } catch (error) {
+        console.log(error);
+    }
+}
+async function fetchMessagesAndShowToUser1(groupId) {
+    try {
+        //const res = await axios.get('http://localhost:5000/message/fetch');
+        // console.log('fetch res', res);
+       // localStorage.setItem('intervalId', intervalId);
+        let oldMessages = JSON.parse(localStorage.getItem('messages'));
+        let lastMsgId;
+        let messages;
+        if(!oldMessages) {
+            console.log('no old messages');
+            oldMessages = [];
+            lastMsgId = 0;
+        }else{
+        //if(lastMsgId !== 0) {
+            messages = oldMessages;
+            lastMsgId = oldMessages[oldMessages.length - 1].id;
         }
+        console.log('last msg id', lastMsgId);
+        // console.log('oldmsgs1', oldMessages);
+        //const res = await axios.get(`http://localhost:5000/message/fetchNewMsgs/?lastMsgId=${lastMsgId}`);
+        const res = await axios.get(`http://localhost:5000/message/fetchNewMsgs/?lastMsgId=${lastMsgId}&groupId=${groupId}`);
+        console.log(res)
+        if(res.status === 200){
+
+           // const messages = res.data.messages;
+            const newMessages = res.data.messages;
+            //let messages = oldMessages.concat(newMessages);
+            messages = oldMessages.concat(newMessages);
+            if(messages.length > 10){
+                messages = messages.slice(messages.length - 10, messages.length);
+            }
+            // console.log('messages', messages);
+            // localStorage.setItem('messages', JSON.stringify(messages));
+            // showChatToUser(messages);
+        }    
+         let currentMsgs = [];
+        for(let i =0 ; i < messages.length; i++) {
+            if(messages[i].groupId == groupId){
+                currentMsgs.push(messages[i]);
+            }
+        }
+        console.log('msgs to show:', currentMsgs);
+        localStorage.setItem('messages', JSON.stringify(messages));
+        showChatToUser(currentMsgs);
+        //socket.emit('messages',currentMsgs)
+
+    } catch (error) {
+        console.log(error);
     }
 };

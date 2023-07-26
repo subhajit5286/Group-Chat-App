@@ -1,3 +1,4 @@
+//const socket = io('http://localhost:5000/chat1')
 document.getElementById('addForm').onsubmit = async (e) => {
     e.preventDefault();
 
@@ -10,8 +11,9 @@ document.getElementById('addForm').onsubmit = async (e) => {
         if(res.status === 200) {
             email.value = '';
             password.value = '';
+             //socket.emit('email',email)
             confirm('User logged in successfully!');
-
+           
             localStorage.setItem('token', res.data.token);
 
             window.location.href = './chat.html';
